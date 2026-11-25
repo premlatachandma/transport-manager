@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#243447"><title>Transport Manager</title>
+<style>
+:root{--navy:#243447;--blue:#2f75b5;--gold:#e5a000;--bg:#f3f5f8;--ink:#1d2935}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font:15px system-ui,-apple-system,Segoe UI,sans-serif;color:var(--ink)}
+header{background:var(--navy);color:#fff;padding:20px 16px 16px;position:sticky;top:0;z-index:2;box-shadow:0 2px 8px #0002}
+h1{font-size:21px;margin:0 0 4px}header small{opacity:.8}
+.tabs{display:flex;gap:8px;margin-top:15px}.tabs button{flex:1;border:0;padding:11px 8px;border-radius:8px;background:#465767;color:white;font-weight:700}.tabs button.active{background:var(--gold);color:#fff}
+main{padding:14px;max-width:900px;margin:auto}.panel{display:none}.panel.active{display:block}
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.metric{background:white;padding:14px;border-radius:12px;box-shadow:0 1px 4px #0001}.metric small{display:block;color:#687582}.metric strong{font-size:20px;display:block;margin-top:5px;overflow-wrap:anywhere}
+form{background:white;padding:14px;border-radius:12px;box-shadow:0 1px 4px #0001}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+label{font-size:13px;font-weight:650;color:#40505e;display:block}input,select,textarea{width:100%;padding:11px;margin-top:5px;border:1px solid #cbd3dc;border-radius:8px;background:#fff;font:inherit;color:#18232d}textarea{min-height:65px}
+.full{grid-column:1/-1}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+button,.btn{border:0;border-radius:8px;padding:11px 14px;background:var(--blue);color:white;font-weight:700;font-size:14px;cursor:pointer}.secondary{background:#687582}.gold{background:var(--gold)}
+.listhead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:16px 0 10px}.listhead h2{font-size:18px;margin:0}.search{max-width:180px}
+.trip{background:white;padding:13px;border-radius:10px;margin:9px 0;box-shadow:0 1px 4px #0001}.triptop{display:flex;justify-content:space-between;gap:8px;font-weight:750}.muted{color:#687582;font-size:13px;margin-top:5px}.money{font-weight:750;color:#137342}.negative{color:#b42318}
+hr{border:0;border-top:1px solid #e5e9ee;margin:10px 0}.hint{font-size:12px;color:#687582;margin:10px 2px}
+@media(min-width:650px){.cards{grid-template-columns:repeat(3,minmax(0,1fr))}.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+</style></head><body>
+<header><h1>🚚 Transport Manager</h1><small>Trip records • income • expenses • profit</small>
+<div class="tabs"><button class="active" data-tab="dashboard">Dashboard</button><button data-tab="entry">Add Trip</button><button data-tab="records">Trip Records</button></div></header>
+<main>
+<section id="dashboard" class="panel active">
+<div class="cards">
+<div class="metric"><small>Total Trips</small><strong id="mTrips">0</strong></div>
+<div class="metric"><small>Total Distance</small><strong id="mKm">0 km</strong></div>
+<div class="metric"><small>Freight Income</small><strong id="mIncome">₹0</strong></div>
+<div class="metric"><small>Total Expenses</small><strong id="mExpense">₹0</strong></div>
+<div class="metric"><small>Net Profit</small><strong id="mProfit">₹0</strong></div>
+<div class="metric"><small>Pending Payments</small><strong id="mPending">0</strong></div>
+</div>
+<div class="hint">Your records are saved on this phone. Use Export CSV regularly to keep a backup.</div>
+<div class="actions"><button onclick="showTab('entry')">＋ Add New Trip</button><button class="secondary" onclick="exportCSV()">Export CSV</button></div>
+</section>
+<section id="entry" class="panel">
+<form id="tripForm"><h2 id="formTitle" style="margin:0 0 13px;font-size:18px">Enter Trip Details</h2>
+<div class="grid">
+<label>Trip ID<input name="id" placeholder="Auto if blank"></label>
+<label>Trip Date<input name="date" type="date" required></label>
+<label>Vehicle Number<input name="vehicle" placeholder="e.g. RJ14 XX 1234"></label>
+<label>Driver Name<input name="driver"></label>
+<label>Customer<input name="customer"></label>
+<label>Cargo / Goods<input name="cargo"></label>
+<label>Pickup Location<input name="from"></label>
+<label>Delivery Location<input name="to"></label>
+<label>Distance (KM)<input name="km" type="number" min="0" step="0.1"></label>
+<label>Start Time<input name="start" type="time"></label>
+<label>End Time<input name="end" type="time"></label>
+<label>Freight Income (₹)<input name="income" type="number" min="0" step="0.01"></label>
+<label>Fuel Expense (₹)<input name="fuel" type="number" min="0" step="0.01"></label>
+<label>Other Expense (₹)<input name="other" type="number" min="0" step="0.01"></label>
+<label>Payment Status<select name="payment"><option>Paid</option><option>Pending</option><option>Part Paid</option><option>Overdue</option></select></label>
+<label>Trip Status<select name="status"><option>Completed</option><option>In Transit</option><option>Cancelled</option></select></label>
+<label class="full">Remarks<textarea name="remarks" placeholder="Any additional details"></textarea></label>
+</div>
+<div class="actions"><button type="submit" class="gold">Save Trip</button><button type="button" class="secondary" onclick="resetForm()">Clear</button></div>
+</form>
+<div class="hint">Time spent, total expenses and net profit are calculated automatically.</div>
+</section>
+<section id="records" class="panel">
+<div class="listhead"><h2>Trip Records</h2><input id="search" class="search" placeholder="Search trips…" oninput="renderRecords()"></div>
+<div id="recordList"></div>
+<div class="actions"><button class="secondary" onclick="exportCSV()">Export CSV</button><button class="secondary" onclick="importPicker.click()">Import CSV</button><input id="importPicker" type="file" accept=".csv,text/csv" hidden onchange="importCSV(event)"></div>
+<div class="hint">CSV files open in Microsoft Excel. Keep a backup before changing phones or clearing app data.</div>
+</section>
+</main>
+<script>
+const KEY='transport-manager-trips-v1';let trips=JSON.parse(localStorage.getItem(KEY)||'[]'),editing=null;
+const $=s=>document.querySelector(s), money=n=>'₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:2});
+function save(){localStorage.setItem(KEY,JSON.stringify(trips));render()}
+function showTab(id){document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('active',x.id===id));document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('active',x.dataset.tab===id));if(id==='records')renderRecords()}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+function totals(t){let hrs='';if(t.start&&t.end){let a=t.start.split(':').reduce((h,m)=>h*60+ +m,0),b=t.end.split(':').reduce((h,m)=>h*60+ +m,0);hrs=((b-a+1440)%1440)/60}let exp=Number(t.fuel||0)+Number(t.other||0);return {hrs,exp,profit:Number(t.income||0)-exp}}
+function render(){let sum=trips.reduce((a,t)=>{let c=totals(t);a.km+=Number(t.km||0);a.inc+=Number(t.income||0);a.exp+=c.exp;a.profit+=c.profit;return a},{km:0,inc:0,exp:0,profit:0});$('#mTrips').textContent=trips.length;$('#mKm').textContent=sum.km.toLocaleString('en-IN')+' km';$('#mIncome').textContent=money(sum.inc);$('#mExpense').textContent=money(sum.exp);$('#mProfit').textContent=money(sum.profit);$('#mPending').textContent=trips.filter(t=>['Pending','Part Paid','Overdue'].includes(t.payment)).length}
+function resetForm(){editing=null;$('#tripForm').reset();$('#formTitle').textContent='Enter Trip Details'}
+$('#tripForm').addEventListener('submit',e=>{e.preventDefault();let f=new FormData(e.target),t=Object.fromEntries(f.entries());t.id=t.id.trim()||('TR-'+Date.now().toString().slice(-8));if(editing!==null)trips[editing]=t;else trips.unshift(t);save();resetForm();showTab('records')});
+function renderRecords(){let q=($('#search').value||'').toLowerCase();let list=trips.map((t,i)=>({t,i})).filter(({t})=>Object.values(t).join(' ').toLowerCase().includes(q));$('#recordList').innerHTML=list.length?list.map(({t,i})=>{let c=totals(t);return `<article class="trip"><div class="triptop"><span>${esc(t.cargo||'Trip')} · ${esc(t.id)}</span><span>${esc(t.date||'')}</span></div><div class="muted">${esc(t.from||'—')} → ${esc(t.to||'—')} · ${Number(t.km||0)} km</div><div class="muted">Vehicle: ${esc(t.vehicle||'—')} · Driver: ${esc(t.driver||'—')}</div><hr><div class="triptop"><span>Income ${money(t.income)}</span><span class="${c.profit<0?'negative':'money'}">Profit ${money(c.profit)}</span></div><div class="muted">Expenses ${money(c.exp)} · ${esc(t.payment||'')} · ${esc(t.status||'')}</div><div class="actions"><button onclick="editTrip(${i})">Edit</button><button class="secondary" onclick="deleteTrip(${i})">Delete</button></div></article>`}).join(''):'<div class="metric">No trip records yet. Tap Add Trip to enter your first trip.</div>'}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function editTrip(i){editing=i;let t=trips[i],form=$('#tripForm');for(let [k,v] of Object.entries(t)){if(form.elements[k])form.elements[k].value=v}$('#formTitle').textContent='Edit Trip';showTab('entry')}
+function deleteTrip(i){if(confirm('Delete this trip record?')){trips.splice(i,1);save()}}
+function exportCSV(){let cols=['id','date','vehicle','driver','customer','cargo','from','to','km','start','end','income','fuel','other','payment','status','remarks'];let labels=['Trip ID','Trip Date','Vehicle No.','Driver Name','Customer','Cargo / Goods','Pickup Location','Delivery Location','Distance (KM)','Start Time','End Time','Freight Income (INR)','Fuel Expense (INR)','Other Expense (INR)','Payment Status','Trip Status','Remarks'];let rows=[labels,...trips.map(t=>cols.map(k=>t[k]||''))];let csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');if(window.Android){Android.saveCsv('transport-trip-records.csv','\ufeff'+csv);return}let a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));a.download='transport-trip-records.csv';a.click();URL.revokeObjectURL(a.href)}
+function importCSV(e){let file=e.target.files[0];if(!file)return;let reader=new FileReader();reader.onload=()=>{let lines=reader.result.replace(/^\uFEFF/,'').split(/\r?\n/).filter(Boolean);let rows=lines.slice(1).map(line=>{let out=[],cur='',quoted=false;for(let i=0;i<line.length;i++){let ch=line[i];if(ch==='"'&&line[i+1]==='"'){cur+='"';i++}else if(ch==='"')quoted=!quoted;else if(ch===','&&!quoted){out.push(cur);cur=''}else cur+=ch}out.push(cur);return out});let keys=['id','date','vehicle','driver','customer','cargo','from','to','km','start','end','income','fuel','other','payment','status','remarks'];let added=rows.map(r=>Object.fromEntries(keys.map((k,i)=>[k,r[i]||'']))).filter(t=>t.id||t.date);trips=added.concat(trips);save();alert('Imported '+added.length+' trip(s).')};reader.readAsText(file);e.target.value=''}
+render();
+</script></body></html>
