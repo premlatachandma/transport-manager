@@ -19,8 +19,9 @@ jobs:
         env:
           JAVA_HOME: ${{ steps.java.outputs.path }}
         run: |
-          java -version
-          gradle assembleDebug --no-daemon -Dorg.gradle.java.home="${{ steps.java.outputs.path }}"
+          ls -la
+          cat build.gradle settings.gradle
+          gradle assembleDebug --no-daemon --stacktrace -Dorg.gradle.java.home="${{ steps.java.outputs.path }}"
       - uses: actions/upload-artifact@v4
         with:
           name: TransportManager-APK
